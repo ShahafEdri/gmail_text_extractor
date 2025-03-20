@@ -8,8 +8,22 @@ document.getElementById("extract").addEventListener("click", () => {
       }, () => {
           chrome.tabs.sendMessage(tabs[0].id, { action: "extractEmails" }, (response) => {
               if (response && response.data) {
-                  downloadCSV(response.data);
-                  document.getElementById("status").innerText = `Extracted ${response.data.length} emails!`;
+                  let emailList = response.data;
+                  
+                  // Now extract full content for each email
+                  let promises = emailList.map(email => {
+                      return new Promise(resolve => {
+                          chrome.tabs.sendMessage(tabs[0].id, { action: "extractFullEmail" }, fullResponse => {
+                              email.body = fullResponse?.data?.body || "No Body";
+                              resolve(email);
+                          });
+                      });
+                  });
+
+                  Promise.all(promises).then(finalEmails => {
+                      downloadCSV(finalEmails);
+                      document.getElementById("status").innerText = `Extracted ${finalEmails.length} emails!`;
+                  });
               } else {
                   document.getElementById("status").innerText = "No emails found!";
               }
@@ -19,12 +33,12 @@ document.getElementById("extract").addEventListener("click", () => {
 });
 
 function downloadCSV(data) {
-  let csvContent = "Sender,Subject,Body,Date\n"; // Add Date column
+  let csvContent = "Sender,Subject,Date,Body\n"; 
   data.forEach(email => {
-      let row = `"${email.sender}","${email.subject}","${email.body}","${email.date}"`;
+      let row = `"${email.sender}","${email.subject}","${email.date}","${email.body}"`;
       csvContent += row + "\n";
   });
-  
+
   let blob = new Blob([csvContent], { type: "text/csv" });
   let url = URL.createObjectURL(blob);
   let a = document.createElement("a");
