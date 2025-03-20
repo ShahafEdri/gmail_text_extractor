@@ -1,12 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Amazon Review Extractor",
+  "name": "Gmail Email Extractor",
   "version": "1.0",
-  "description": "Extracts Amazon product reviews",
+  "description": "Extracts emails from Gmail's filtered view",
   "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": [
-    "https://www.amazon.com/*"
-  ],
+  "host_permissions": ["https://mail.google.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -17,7 +15,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.amazon.com/*"],
+      "matches": ["https://mail.google.com/*"],
       "js": ["content.js"]
     }
   ]

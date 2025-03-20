@@ -1,40 +1,36 @@
 document.getElementById("extract").addEventListener("click", () => {
-    document.getElementById("status").innerText = "Extracting reviews...";
-    let iterate = document.getElementById("iterate").checked;
-    
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  document.getElementById("status").innerText = "Extracting emails...";
+  
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        files: ["content.js"]
+          target: { tabId: tabs[0].id },
+          files: ["content.js"]
       }, () => {
-        // Send a message to the content script with the iterate flag
-        chrome.tabs.sendMessage(tabs[0].id, { action: "extractReviews", iterate: iterate }, (response) => {
-          if (response && response.data) {
-            downloadCSV(response.data);
-            document.getElementById("status").innerText = `Extracted ${response.data.length} reviews!`;
-          } else {
-            document.getElementById("status").innerText = "No reviews found!";
-          }
-        });
+          chrome.tabs.sendMessage(tabs[0].id, { action: "extractEmails" }, (response) => {
+              if (response && response.data) {
+                  downloadCSV(response.data);
+                  document.getElementById("status").innerText = `Extracted ${response.data.length} emails!`;
+              } else {
+                  document.getElementById("status").innerText = "No emails found!";
+              }
+          });
       });
-    });
+  });
+});
+
+function downloadCSV(data) {
+  let csvContent = "Sender,Subject,Body,Date\n"; // Add Date column
+  data.forEach(email => {
+      let row = `"${email.sender}","${email.subject}","${email.body}","${email.date}"`;
+      csvContent += row + "\n";
   });
   
-  // Download the extracted data as a CSV file
-  function downloadCSV(data) {
-    let csvContent = "Title,Rating,Author,Date,Content\n";
-    data.forEach(review => {
-      let row = `"${review.title}","${review.rating}","${review.author}","${review.date}","${review.content}"`;
-      csvContent += row + "\n";
-    });
-    
-    let blob = new Blob([csvContent], { type: "text/csv" });
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "amazon_reviews.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  
+  let blob = new Blob([csvContent], { type: "text/csv" });
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "gmail_emails.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
