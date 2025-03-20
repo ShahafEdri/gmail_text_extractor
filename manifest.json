@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Amazon Review Extractor",
+  "version": "1.0",
+  "description": "Extracts Amazon product reviews",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://www.amazon.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.amazon.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
