@@ -1,49 +1,37 @@
 document.getElementById("extract").addEventListener("click", () => {
   document.getElementById("status").innerText = "Extracting emails...";
-  
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          files: ["content.js"]
-      }, () => {
-          chrome.tabs.sendMessage(tabs[0].id, { action: "extractEmails" }, (response) => {
-              if (response && response.data) {
-                  let emailList = response.data;
-                  
-                  // Now extract full content for each email
-                  let promises = emailList.map(email => {
-                      return new Promise(resolve => {
-                          chrome.tabs.sendMessage(tabs[0].id, { action: "extractFullEmail" }, fullResponse => {
-                              email.body = fullResponse?.data?.body || "No Body";
-                              resolve(email);
-                          });
-                      });
-                  });
 
-                  Promise.all(promises).then(finalEmails => {
-                      downloadCSV(finalEmails);
-                      document.getElementById("status").innerText = `Extracted ${finalEmails.length} emails!`;
-                  });
-              } else {
-                  document.getElementById("status").innerText = "No emails found!";
-              }
-          });
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    chrome.scripting.executeScript({
+      target: { tabId: tabs[0].id },
+      files: ["content.js"]
+    }, () => {
+      chrome.tabs.sendMessage(tabs[0].id, { action: "extractEmails" }, (response) => {
+        if (response && response.data) {
+          let emailList = response.data;
+
+          downloadCSV(emailList);
+          document.getElementById("status").innerText = `Extracted ${emailList.length} emails!`;
+        } else {
+          document.getElementById("status").innerText = "No emails found!";
+        }
       });
+    });
   });
 });
 
 
 function downloadCSV(data) {
-  let csvContent = "Sender,Subject,Date,Body\n"; 
+  let csvContent = "Sender,Subject,Date,Body\n";
 
   data.forEach(email => {
-      let row = [
-          `"${email.sender.replace(/"/g, '""')}"`,
-          `"${email.subject.replace(/"/g, '""')}"`,
-          `"${email.date.replace(/"/g, '""')}"`,
-          `"${email.body.replace(/"/g, '""').replace(/\n/g, ' ') }"` // Remove newlines from body
-      ].join(",");
-      csvContent += row + "\n";
+    let row = [
+      `"${email.sender.replace(/"/g, '""')}"`,
+      `"${email.subject.replace(/"/g, '""')}"`,
+      `"${email.date.replace(/"/g, '""')}"`,
+      `"${email.body.replace(/"/g, '""').replace(/\n/g, ' ')}"` // Remove newlines from body
+    ].join(",");
+    csvContent += row + "\n";
   });
 
   let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
