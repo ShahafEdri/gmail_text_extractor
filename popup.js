@@ -32,14 +32,21 @@ document.getElementById("extract").addEventListener("click", () => {
   });
 });
 
+
 function downloadCSV(data) {
   let csvContent = "Sender,Subject,Date,Body\n"; 
+
   data.forEach(email => {
-      let row = `"${email.sender}","${email.subject}","${email.date}","${email.body}"`;
+      let row = [
+          `"${email.sender.replace(/"/g, '""')}"`,
+          `"${email.subject.replace(/"/g, '""')}"`,
+          `"${email.date.replace(/"/g, '""')}"`,
+          `"${email.body.replace(/"/g, '""').replace(/\n/g, ' ') }"` // Remove newlines from body
+      ].join(",");
       csvContent += row + "\n";
   });
 
-  let blob = new Blob([csvContent], { type: "text/csv" });
+  let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   let url = URL.createObjectURL(blob);
   let a = document.createElement("a");
   a.href = url;
